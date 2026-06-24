@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cidadania Digital & IA — Deepfakes e Desinformação</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* =============================================
+       TOKENS
+    ============================================= */
+    :root {
+      --bg:        #0D1B2A;
+      --bg2:       #112233;
+      --bg3:       #0A2540;
+      --cyan:      #00E5FF;
+      --cyan-dim:  #00B8CC;
+      --red:       #FF3B4E;
+      --green:     #00C896;
+      --white:     #E8F4FD;
+      --muted:     #7B9BB5;
+      --border:    rgba(0,229,255,.15);
+      --font-d:    'Space Grotesk', sans-serif;
+      --font-b:    'Inter', sans-serif;
+      --radius:    12px;
+      --radius-lg: 20px;
+      --transition: .25s ease;
+    }
+
+    /* =============================================
+       RESET / BASE
+    ============================================= */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--white);
+      font-family: var(--font-b);
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+    img { display: block; max-width: 100%; }
+    a { color: var(--cyan); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* =============================================
+       SCROLLBAR
+    ============================================= */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--cyan-dim); border-radius: 3px; }
+
+    /* =============================================
+       NOISE OVERLAY (texture)
+    ============================================= */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    /* =============================================
+       NAV
+    ============================================= */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 900;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 5%;
+      background: rgba(13,27,42,.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-d);
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: .6rem;
+      font-weight: 700; font-size: 1.05rem; color: var(--white);
+    }
+    .nav-logo span { color: var(--cyan); }
+    .nav-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--cyan);
+      animation: pulse 2s infinite;
+    }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a {
+      color: var(--muted); font-size: .9rem; font-weight: 500;
+      transition: color var(--transition);
+    }
+    .nav-links a:hover { color: var(--cyan); text-decoration: none; }
+    .nav-cta {
+      background: var(--cyan); color: var(--bg) !important;
+      padding: .45rem 1.1rem; border-radius: 6px;
+      font-weight: 600 !important; font-size: .85rem !important;
+      transition: background var(--transition), transform var(--transition) !important;
+    }
+    .nav-cta:hover { background: var(--cyan-dim) !important; transform: translateY(-1px); }
+    .hamburger { display: none; background: none; border: none; cursor: pointer; color: var(--white); }
+
+    /* =============================================
+       HERO — GLITCH SIGNATURE
+    ============================================= */
+    #hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center;
+      padding: 8rem 5% 5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,255,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+    .hero-glow {
+      position: absolute; top: 20%; left: 50%;
+      transform: translateX(-50%);
+      width: 600px; height: 400px;
+      background: radial-gradient(ellipse, rgba(0,229,255,.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: .5rem;
+      background: rgba(0,229,255,.1); border: 1px solid var(--border);
+      color: var(--cyan); font-size: .8rem; font-weight: 600;
+      padding: .35rem .9rem; border-radius: 100px;
+      font-family: var(--font-d); letter-spacing: .08em; text-transform: uppercase;
+      margin-bottom: 2rem;
+    }
+    .hero-badge::before {
+      content: '';
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--red);
+      animation: pulse 1.5s infinite;
+    }
+    h1 {
+      font-family: var(--font-d);
+      font-size: clamp(2.4rem, 6vw, 5rem);
+      font-weight: 700; line-height: 1.1;
+      letter-spacing: -.02em;
+      max-width: 800px;
+      position: relative;
+    }
+    .glitch-wrap { position: relative; display: inline-block; }
+    .glitch-word {
+      color: var(--cyan);
+      position: relative;
+      display: inline-block;
+    }
+    .glitch-word::before,
+    .glitch-word::after {
+      content: attr(data-text);
+      position: absolute; inset: 0;
+      clip-path: polygon(0 0, 100% 0, 100% 33%, 0 33%);
+    }
+    .glitch-word::before {
+      color: var(--red);
+      animation: glitch-top 3s infinite;
+    }
+    .glitch-word::after {
+      color: var(--green);
+      clip-path: polygon(0 66%, 100% 66%, 100% 100%, 0 100%);
+      animation: glitch-bot 3s infinite;
+    }
+    @keyframes glitch-top {
+      0%,85%,100% { transform: translateX(0); }
+      87%    { transform: translateX(-4px); }
+      89%    { transform: translateX(4px); }
+      91%    { transform: translateX(-3px); }
+      93%    { transform: translateX(0); }
+    }
+    @keyframes glitch-bot {
+      0%,85%,100% { transform: translateX(0); }
+      88%    { transform: translateX(4px); }
+      90%    { transform: translateX(-4px); }
+      92%    { transform: translateX(2px); }
+      94%    { transform: translateX(0); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .4; }
+    }
+    .hero-sub {
+      max-width: 580px;
+      color: var(--muted);
+      font-size: 1.05rem;
+      margin: 1.5rem auto 2.5rem;
+      line-height: 1.8;
+    }
+    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+    .btn-primary {
+      background: var(--cyan); color: var(--bg);
+      padding: .85rem 2rem; border-radius: 8px;
+      font-family: var(--font-d); font-weight: 700; font-size: 1rem;
+      border: none; cursor: pointer;
+      transition: transform var(--transition), background var(--transition);
+    }
+    .btn-primary:hover { background: var(--cyan-dim); transform: translateY(-2px); }
+    .btn-secondary {
+      background: transparent; color: var(--white);
+      padding: .85rem 2rem; border-radius: 8px;
+      font-family: var(--font-d); font-weight: 600; font-size: 1rem;
+      border: 1px solid var(--border); cursor: pointer;
+      transition: border-color var(--transition), color var(--transition);
+    }
+    .btn-secondary:hover { border-color: var(--cyan); color: var(--cyan); }
+    .hero-stats {
+      display: flex; gap: 3rem; flex-wrap: wrap; justify-content: center;
+      margin-top: 4rem;
+    }
+    .stat-item { text-align: center; }
+    .stat-num {
+      font-family: var(--font-d); font-size: 2.2rem; font-weight: 700;
+      color: var(--cyan); display: block; line-height: 1;
+    }
+    .stat-label { font-size: .8rem; color: var(--muted); margin-top: .3rem; text-transform: uppercase; letter-spacing: .06em; }
+
+    /* =============================================
+       SECTIONS BASE
+    ============================================= */
+    section { padding: 6rem 5%; }
+    .section-tag {
+      display: inline-block;
+      font-family: var(--font-d); font-size: .75rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .12em;
+      color: var(--cyan); margin-bottom: 1rem;
+    }
+    h2 {
+      font-family: var(--font-d);
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 700; line-height: 1.15;
+      letter-spacing: -.02em;
+      max-width: 680px;
+    }
+    h2 em { font-style: normal; color: var(--cyan); }
+    .section-intro {
+      color: var(--muted); font-size: 1.05rem;
+      max-width: 560px; margin-top: 1rem;
+    }
+
+    /* =============================================
+       O QUE É DEEPFAKE — CARDS
+    ============================================= */
+    #deepfake { background: var(--bg2); }
+    .deepfake-inner {
+      max-width: 1100px; margin: 0 auto;
+    }
+    .header-row {
+      display: flex; flex-direction: column; gap: .5rem;
+      margin-bottom: 3.5rem;
+    }
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      transition: transform var(--transition), border-color var(--transition);
+    }
+    .card:hover { transform: translateY(-4px); border-color: rgba(0,229,255,.35); }
+    .card-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; margin-bottom: 1.2rem;
+    }
+    .icon-red   { background: rgba(255,59,78,.15); }
+    .icon-cyan  { background: rgba(0,229,255,.12); }
+    .icon-amber { background: rgba(255,180,0,.12); }
+    .icon-green { background: rgba(0,200,150,.12); }
+    .card h3 { font-family: var(--font-d); font-size: 1.1rem; font-weight: 600; margin-bottom: .6rem; }
+    .card p  { color: var(--muted); font-size: .92rem; line-height: 1.7; }
+
+    /* =============================================
+       COMO IDENTIFICAR — CHECKLIST
+    ============================================= */
+    #identificar {
+      background: var(--bg);
+      position: relative;
+    }
+    .identify-inner {
+      max-width: 1100px; margin: 0 auto;
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 4rem; align-items: start;
+    }
+    .checklist {
+      display: flex; flex-direction: column; gap: 1rem;
+      margin-top: 2.5rem;
+    }
+    .check-item {
+      display: flex; align-items: flex-start; gap: 1rem;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.1rem 1.3rem;
+      transition: border-color var(--transition);
+    }
+    .check-item:hover { border-color: var(--cyan); }
+    .check-icon {
+      flex-shrink: 0;
+      width: 32px; height: 32px; border-radius: 8px;
+      background: rgba(0,229,255,.12);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .9rem; color: var(--cyan);
+    }
+    .check-content h4 { font-family: var(--font-d); font-size: .95rem; font-weight: 600; margin-bottom: .2rem; }
+    .check-content p { color: var(--muted); font-size: .87rem; line-height: 1.6; }
+
+    /* DETECTOR INTERATIVO */
+    .detector-panel {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+    }
+    .detector-panel h3 {
+      font-family: var(--font-d); font-weight: 700; font-size: 1.15rem;
+      margin-bottom: .4rem;
+    }
+    .detector-panel p { color: var(--muted); font-size: .9rem; margin-bottom: 1.5rem; }
+    .detector-img-wrap {
+      position: relative; border-radius: var(--radius);
+      overflow: hidden; cursor: pointer;
+      background: #0a1520;
+      height: 240px; display: flex; align-items: center; justify-content: center;
+    }
+    .detector-canvas { width: 100%; height: 100%; position: relative; }
+    .detector-overlay {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: .5rem;
+    }
+    .detector-label {
+      font-family: var(--font-d); font-size: .75rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .1em;
+      padding: .25rem .8rem; border-radius: 100px;
+      opacity: 0; transition: opacity .4s;
+    }
+    .label-real  { background: rgba(0,200,150,.2); color: var(--green); border: 1px solid var(--green); }
+    .label-fake  { background: rgba(255,59,78,.2); color: var(--red); border: 1px solid var(--red); }
+    .detector-score {
+      font-family: var(--font-d); font-size: 2rem; font-weight: 700;
+      color: var(--white); opacity: 0; transition: opacity .4s;
+    }
+    .detector-hint {
+      font-size: .75rem; color: var(--muted);
+    }
+    .detector-btn {
+      width: 100%; margin-top: 1rem;
+      background: var(--cyan); color: var(--bg);
+      border: none; border-radius: 8px;
+      font-family: var(--font-d); font-weight: 700; font-size: .95rem;
+      padding: .75rem; cursor: pointer;
+      transition: background var(--transition);
+    }
+    .detector-btn:hover { background: var(--cyan-dim); }
+    .detector-faces {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: .75rem; margin-top: 1rem;
+    }
+    .face-option {
+      background: var(--bg3);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: .6rem .8rem;
+      cursor: pointer; text-align: center;
+      transition: border-color var(--transition), background var(--transition);
+    }
+    .face-option:hover { border-color: var(--cyan); }
+    .face-option.selected { border-color: var(--cyan); background: rgba(0,229,255,.08); }
+    .face-label { font-family: var(--font-d); font-size: .8rem; font-weight: 600; }
+    .face-sub { font-size: .72rem; color: var(--muted); }
+
+    /* =============================================
+       QUIZ
+    ============================================= */
+    #quiz { background: var(--bg2); }
+    .quiz-inner { max-width: 760px; margin: 0 auto; }
+    .quiz-box {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem;
+      margin-top: 2.5rem;
+    }
+    .quiz-progress-bar {
+      height: 4px; background: var(--border);
+      border-radius: 2px; margin-bottom: 2rem; overflow: hidden;
+    }
+    .quiz-fill {
+      height: 100%; background: var(--cyan);
+      border-radius: 2px; transition: width .5s ease;
+    }
+    .quiz-counter { font-family: var(--font-d); font-size: .78rem; color: var(--muted); margin-bottom: .8rem; }
+    .quiz-question {
+      font-family: var(--font-d); font-size: 1.2rem; font-weight: 600;
+      line-height: 1.5; margin-bottom: 1.8rem;
+    }
+    .quiz-options { display: flex; flex-direction: column; gap: .7rem; }
+    .quiz-option {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1rem 1.2rem;
+      cursor: pointer; font-size: .95rem;
+      display: flex; align-items: center; gap: .8rem;
+      transition: border-color var(--transition), background var(--transition);
+    }
+    .quiz-option:hover:not(.disabled) { border-color: var(--cyan); background: rgba(0,229,255,.05); }
+    .quiz-option.correct { border-color: var(--green); background: rgba(0,200,150,.08); }
+    .quiz-option.wrong   { border-color: var(--red); background: rgba(255,59,78,.08); }
+    .quiz-option.disabled { cursor: default; }
+    .option-letter {
+      flex-shrink: 0;
+      width: 28px; height: 28px; border-radius: 6px;
+      background: var(--bg3); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-d); font-size: .78rem; font-weight: 700;
+      color: var(--muted);
+    }
+    .quiz-option.correct .option-letter { background: rgba(0,200,150,.2); color: var(--green); border-color: var(--green); }
+    .quiz-option.wrong .option-letter   { background: rgba(255,59,78,.2); color: var(--red); border-color: var(--red); }
+    .quiz-feedback {
+      margin-top: 1rem; padding: .9rem 1.1rem;
+      border-radius: var(--radius); font-size: .9rem; line-height: 1.6;
+      display: none;
+    }
+    .feedback-correct { background: rgba(0,200,150,.1); border: 1px solid rgba(0,200,150,.3); color: var(--green); }
+    .feedback-wrong   { background: rgba(255,59,78,.1); border: 1px solid rgba(255,59,78,.3); color: #ff8090; }
+    .quiz-next {
+      margin-top: 1.5rem; width: 100%;
+      background: var(--cyan); color: var(--bg);
+      border: none; border-radius: 8px;
+      font-family: var(--font-d); font-weight: 700; font-size: 1rem;
+      padding: .85rem; cursor: pointer; display: none;
+      transition: background var(--transition);
+    }
+    .quiz-next:hover { background: var(--cyan-dim); }
+    .quiz-result {
+      text-align: center; display: none;
+    }
+    .result-score-big {
+      font-family: var(--font-d); font-size: 5rem; font-weight: 700;
+      color: var(--cyan); line-height: 1; display: block;
+    }
+    .result-label { font-family: var(--font-d); font-size: 1.3rem; font-weight: 600; margin: .5rem 0 1rem; }
+    .result-msg   { color: var(--muted); font-size: .95rem; margin-bottom: 2rem; max-width: 400px; margin-left: auto; margin-right: auto; }
+    .quiz-restart {
+      background: transparent; color: var(--cyan);
+      border: 1px solid var(--cyan); border-radius: 8px;
+      padding: .75rem 2rem; cursor: pointer;
+      font-family: var(--font-d); font-weight: 700; font-size: .95rem;
+      transition: background var(--transition);
+    }
+    .quiz-restart:hover { background: rgba(0,229,255,.1); }
+
+    /* =============================================
+       DICAS DE SEGURANÇA
+    ============================================= */
+    #dicas { background: var(--bg); }
+    .dicas-inner { max-width: 1100px; margin: 0 auto; }
+    .dicas-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1.5rem; margin-top: 3rem;
+    }
+    .tip-card {
+      position: relative;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 1.8rem;
+      overflow: hidden;
+      transition: transform var(--transition), border-color var(--transition);
+    }
+    .tip-card:hover { transform: translateY(-4px); border-color: rgba(0,229,255,.3); }
+    .tip-card::before {
+      content: attr(data-num);
+      position: absolute; top: -12px; right: 12px;
+      font-family: var(--font-d); font-size: 5rem; font-weight: 900;
+      color: rgba(0,229,255,.05); line-height: 1; pointer-events: none;
+    }
+    .tip-emoji { font-size: 1.8rem; margin-bottom: 1rem; }
+    .tip-card h3 { font-family: var(--font-d); font-weight: 700; font-size: 1rem; margin-bottom: .5rem; }
+    .tip-card p  { color: var(--muted); font-size: .88rem; line-height: 1.65; }
+
+    /* =============================================
+       FERRAMENTAS
+    ============================================= */
+    #ferramentas { background: var(--bg2); }
+    .tools-inner { max-width: 1100px; margin: 0 auto; }
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem; margin-top: 3rem;
+    }
+    .tool-card {
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 1.8rem;
+      display: flex; flex-direction: column; gap: .8rem;
+      transition: transform var(--transition), border-color var(--transition);
+    }
+    .tool-card:hover { transform: translateY(-4px); border-color: rgba(0,229,255,.3); }
+    .tool-header { display: flex; align-items: center; gap: .8rem; }
+    .tool-logo { font-size: 1.6rem; }
+    .tool-name { font-family: var(--font-d); font-weight: 700; font-size: 1rem; }
+    .tool-tag {
+      font-size: .72rem; font-weight: 600;
+      padding: .2rem .6rem; border-radius: 100px;
+      text-transform: uppercase; letter-spacing: .06em;
+    }
+    .tag-free { background: rgba(0,200,150,.15); color: var(--green); }
+    .tag-edu  { background: rgba(0,229,255,.12); color: var(--cyan); }
+    .tool-desc { color: var(--muted); font-size: .88rem; line-height: 1.65; }
+    .tool-link {
+      align-self: flex-start; margin-top: auto;
+      font-family: var(--font-d); font-size: .82rem; font-weight: 600;
+      color: var(--cyan); display: flex; align-items: center; gap: .3rem;
+    }
+    .tool-link::after { content: '→'; transition: transform var(--transition); }
+    .tool-link:hover::after { transform: translateX(4px); }
+
+    /* =============================================
+       FOOTER
+    ============================================= */
+    footer {
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      padding: 3rem 5%;
+      text-align: center;
+    }
+    .footer-logo {
+      font-family: var(--font-d); font-size: 1.3rem; font-weight: 700;
+      color: var(--white); margin-bottom: .8rem;
+    }
+    .footer-logo span { color: var(--cyan); }
+    .footer-tag {
+      display: inline-block;
+      background: rgba(0,229,255,.08); border: 1px solid var(--border);
+      color: var(--cyan); font-size: .82rem; font-weight: 600;
+      padding: .3rem .9rem; border-radius: 100px;
+      font-family: var(--font-d); letter-spacing: .05em;
+      margin-bottom: 1.2rem;
+    }
+    footer p { color: var(--muted); font-size: .85rem; }
+
+    /* =============================================
+       SCROLL REVEAL
+    ============================================= */
+    .reveal {
+      opacity: 0; transform: translateY(28px);
+      transition: opacity .6s ease, transform .6s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* =============================================
+       MOBILE
+    ============================================= */
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .nav-links.open {
+        display: flex; flex-direction: column;
+        position: fixed; inset: 0; top: 60px;
+        background: var(--bg2); padding: 2rem 5%;
+        gap: 1.5rem; z-index: 800;
+      }
+      .nav-links a { font-size: 1.1rem; }
+      .hamburger { display: block; }
+      .identify-inner { grid-template-columns: 1fr; gap: 2.5rem; }
+      .hero-stats { gap: 2rem; }
+      .stat-num { font-size: 1.8rem; }
+    }
+    @media (max-width: 480px) {
+      nav { padding: .8rem 1rem; }
+      section { padding: 4rem 1rem; }
+      .detector-faces { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- =================== NAV =================== -->
+<nav>
+  <div class="nav-logo">
+    <div class="nav-dot"></div>
+    Cidadania<span>Digital</span>
+  </div>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#deepfake">O que é</a></li>
+    <li><a href="#identificar">Identificar</a></li>
+    <li><a href="#quiz">Quiz</a></li>
+    <li><a href="#dicas">Dicas</a></li>
+    <li><a href="#ferramentas">Ferramentas</a></li>
+    <li><a href="#quiz" class="nav-cta">Testar agora</a></li>
+  </ul>
+  <button class="hamburger" id="hamburger" aria-label="Menu">
+    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="6" x2="21" y2="6"/>
+      <line x1="3" y1="12" x2="21" y2="12"/>
+      <line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+</nav>
+
+<!-- =================== HERO =================== -->
+<section id="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+
+  <div class="hero-badge">Educação Digital 2026 · Projeto de Recuperação</div>
+
+  <h1>
+    Você consegue distinguir o que é
+    <span class="glitch-wrap">
+      <span class="glitch-word" data-text="real">real</span>
+    </span>
+    do que é
+    <span style="color: var(--red);">fake?</span>
+  </h1>
+
+  <p class="hero-sub">
+    Deepfakes, desinformação automatizada por IA e fake news moldam o que acreditamos.
+    Aprenda a proteger sua mente — e a dos outros — no mundo digital.
+  </p>
+
+  <div class="hero-actions">
+    <button class="btn-primary" onclick="document.getElementById('quiz').scrollIntoView({behavior:'smooth'})">Fazer o quiz agora</button>
+    <button class="btn-secondary" onclick="document.getElementById('deepfake').scrollIntoView({behavior:'smooth'})">Aprender mais ↓</button>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat-item">
+      <span class="stat-num" data-count="96">0</span>
+      <div class="stat-label">% dos deepfakes têm alvo feminino</div>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num" data-count="500">0</span>
+      <div class="stat-label">% de crescimento em 3 anos</div>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num" data-count="70">0</span>
+      <div class="stat-label">% das pessoas não identificam</div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== O QUE É DEEPFAKE =================== -->
+<section id="deepfake">
+  <div class="deepfake-inner">
+    <div class="header-row reveal">
+      <span class="section-tag">Entenda o problema</span>
+      <h2>O que são <em>deepfakes</em> e desinformação por IA?</h2>
+      <p class="section-intro">Tecnologia que cria mídias falsas hiper-realistas está disponível para qualquer pessoa — e o impacto social é enorme.</p>
+    </div>
+
+    <div class="cards-grid">
+      <div class="card reveal">
+        <div class="card-icon icon-red">🎭</div>
+        <h3>Deepfake de Vídeo</h3>
+        <p>Algoritmos de IA (especialmente GANs — Redes Generativas Adversariais) trocam rostos ou criam pessoas inteiras em vídeos que parecem 100% reais, com sincronização labial perfeita.</p>
+      </div>
+      <div class="card reveal">
+        <div class="card-icon icon-cyan">🎙️</div>
+        <h3>Clonagem de Voz</h3>
+        <p>Com apenas 3 segundos de áudio real, ferramentas de IA já conseguem clonar a voz de qualquer pessoa e fazer ela "dizer" qualquer coisa — usada em golpes e fraudes.</p>
+      </div>
+      <div class="card reveal">
+        <div class="card-icon icon-amber">🖼️</div>
+        <h3>Imagens Geradas</h3>
+        <p>Fotos de eventos que nunca aconteceram, de pessoas que não existem ou de celebridades em situações falsas são criadas em segundos por ferramentas como Midjourney e DALL-E.</p>
+      </div>
+      <div class="card reveal">
+        <div class="card-icon icon-green">📰</div>
+        <h3>Fake News Automatizadas</h3>
+        <p>LLMs (Modelos de Linguagem) como o GPT podem gerar artigos inteiros, notícias falsas e comentários em massa para manipular a opinião pública em escala nunca vista antes.</p>
+      </div>
+      <div class="card reveal">
+        <div class="card-icon icon-red">⚠️</div>
+        <h3>Impacto na Democracia</h3>
+        <p>Campanhas de desinformação automatizadas já influenciaram eleições em vários países. Um vídeo falso de um candidato pode viralizar e derrubar uma candidatura em horas.</p>
+      </div>
+      <div class="card reveal">
+        <div class="card-icon icon-cyan">🔬</div>
+        <h3>Como a IA Detecta IA</h3>
+        <p>Ferramentas anti-deepfake analisam anomalias: piscadas fora do ritmo humano, sombras inconsistentes, bordas do cabelo "suavizadas" demais ou artefatos digitais no fundo.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== COMO IDENTIFICAR =================== -->
+<section id="identificar">
+  <div class="identify-inner">
+    <div>
+      <div class="reveal">
+        <span class="section-tag">Seu guia prático</span>
+        <h2>Como <em>identificar</em> um deepfake</h2>
+        <p class="section-intro">Saber o que observar pode fazer toda a diferença entre compartilhar uma verdade ou amplificar uma mentira.</p>
+      </div>
+
+      <div class="checklist">
+        <div class="check-item reveal">
+          <div class="check-icon">👁️</div>
+          <div class="check-content">
+            <h4>Olhos e piscadas</h4>
+            <p>Deepfakes frequentemente apresentam piscadas irregulares, olhos sem brilho natural ou íris que "flutuam" nas bordas. Observe com atenção em câmera lenta.</p>
+          </div>
+        </div>
+        <div class="check-item reveal">
+          <div class="check-icon">💇</div>
+          <div class="check-content">
+            <h4>Bordas do cabelo e orelhas</h4>
+            <p>IA tem dificuldade com cabelos finos e orelhas. Procure bordas borradas, cabelos "colados" ao fundo ou orelhas assimétricas entre um quadro e outro.</p>
+          </div>
+        </div>
+        <div class="check-item reveal">
+          <div class="check-icon">🎤</div>
+          <div class="check-content">
+            <h4>Sincronização labial</h4>
+            <p>Lábios que não combinam perfeitamente com o áudio, especialmente em consoantes como B, P e M, são um indicativo claro de manipulação de vídeo.</p>
+          </div>
+        </div>
+        <div class="check-item reveal">
+          <div class="check-icon">💡</div>
+          <div class="check-content">
+            <h4>Iluminação inconsistente</h4>
+            <p>O rosto manipulado pode ter uma iluminação diferente do restante do vídeo. Sombras que não batem com a fonte de luz são um sinal vermelho importante.</p>
+          </div>
+        </div>
+        <div class="check-item reveal">
+          <div class="check-icon">🔍</div>
+          <div class="check-content">
+            <h4>Contexto e fonte</h4>
+            <p>Pesquise a fonte original. Use busca reversa de imagens no Google ou TinEye. Se a notícia não aparece em veículos confiáveis, desconfie imediatamente.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Painel Interativo -->
+    <div class="reveal">
+      <div class="detector-panel">
+        <h3>🔬 Simulador de Análise</h3>
+        <p>Escolha um tipo de mídia e simule uma análise de autenticidade.</p>
+
+        <div class="detector-faces">
+          <div class="face-option selected" data-real="false" onclick="selectFace(this, false)">
+            <div class="face-label">🎭 Vídeo Político</div>
+            <div class="face-sub">Candidato fazendo discurso</div>
+          </div>
+          <div class="face-option" data-real="true" onclick="selectFace(this, true)">
+            <div class="face-label">📸 Foto de Evento</div>
+            <div class="face-sub">Manifestação estudantil</div>
+          </div>
+          <div class="face-option" data-real="false" onclick="selectFace(this, false)">
+            <div class="face-label">🎙️ Áudio de CEO</div>
+            <div class="face-sub">"Vazamento" interno</div>
+          </div>
+          <div class="face-option" data-real="true" onclick="selectFace(this, true)">
+            <div class="face-label">📰 Artigo de Jornal</div>
+            <div class="face-sub">Folha de S.Paulo, 2026</div>
+          </div>
+        </div>
+
+        <div class="detector-img-wrap" id="detectorVisual">
+          <canvas id="scanCanvas" width="320" height="200" class="detector-canvas"></canvas>
+          <div class="detector-overlay">
+            <div class="detector-label label-real" id="labelReal">✓ AUTÊNTICO</div>
+            <div class="detector-label label-fake" id="labelFake">✗ DEEPFAKE DETECTADO</div>
+            <div class="detector-score" id="detectorScore"></div>
+            <div class="detector-hint" id="detectorHint">Clique em Analisar para iniciar</div>
+          </div>
+        </div>
+
+        <button class="detector-btn" id="analyzeBtn" onclick="runAnalysis()">Analisar Mídia</button>
+
+        <div id="detectorResult" style="margin-top:1rem; font-size:.85rem; color:var(--muted); line-height:1.6; display:none;"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== QUIZ =================== -->
+<section id="quiz">
+  <div class="quiz-inner">
+    <div class="reveal" style="text-align:center">
+      <span class="section-tag">Teste seu conhecimento</span>
+      <h2 style="max-width:100%; text-align:center;">Você consegue <em>identificar</em> a desinformação?</h2>
+      <p class="section-intro" style="margin:1rem auto 0; text-align:center;">5 perguntas para avaliar sua alfabetização midiática digital.</p>
+    </div>
+
+    <div class="quiz-box reveal" id="quizBox">
+      <div class="quiz-progress-bar">
+        <div class="quiz-fill" id="quizFill" style="width:0%"></div>
+      </div>
+
+      <div id="quizContent">
+        <div class="quiz-counter" id="quizCounter">Pergunta 1 de 5</div>
+        <div class="quiz-question" id="quizQuestion"></div>
+        <div class="quiz-options" id="quizOptions"></div>
+        <div class="quiz-feedback" id="quizFeedback"></div>
+        <button class="quiz-next" id="quizNext" onclick="nextQuestion()">Próxima pergunta →</button>
+      </div>
+
+      <div class="quiz-result" id="quizResult">
+        <span class="result-score-big" id="resultScore"></span>
+        <div class="result-label" id="resultLabel"></div>
+        <p class="result-msg" id="resultMsg"></p>
+        <button class="quiz-restart" onclick="restartQuiz()">↩ Refazer quiz</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== DICAS =================== -->
+<section id="dicas">
+  <div class="dicas-inner">
+    <div class="header-row reveal">
+      <span class="section-tag">Proteção pessoal</span>
+      <h2>Boas práticas de <em>segurança</em> digital</h2>
+      <p class="section-intro">Hábitos simples que protegem você — e sua família — contra desinformação e golpes por IA.</p>
+    </div>
+
+    <div class="dicas-grid">
+      <div class="tip-card reveal" data-num="01">
+        <div class="tip-emoji">🔐</div>
+        <h3>Senhas únicas e gerenciador</h3>
+        <p>Use senhas diferentes para cada serviço e um gerenciador (Bitwarden, 1Password). Nunca reutilize senhas — uma vazada compromete todas as contas.</p>
+      </div>
+      <div class="tip-card reveal" data-num="02">
+        <div class="tip-emoji">📲</div>
+        <h3>Autenticação em dois fatores</h3>
+        <p>Ative 2FA em todas as contas importantes. Prefira aplicativos autenticadores (Google Authenticator, Aegis) ao SMS, que pode ser interceptado.</p>
+      </div>
+      <div class="tip-card reveal" data-num="03">
+        <div class="tip-emoji">🤔</div>
+        <h3>Pense antes de compartilhar</h3>
+        <p>Notícias emocionantes ou chocantes são projetadas para viralizar sem checagem. Pare 3 segundos: a fonte é confiável? Há corroboração? Só então compartilhe.</p>
+      </div>
+      <div class="tip-card reveal" data-num="04">
+        <div class="tip-emoji">🔎</div>
+        <h3>Verifique antes de acreditar</h3>
+        <p>Use sites de checagem: Agência Lupa, AosFatos, Comprova. Para imagens, use busca reversa no Google Imagens ou TinEye para encontrar a origem real.</p>
+      </div>
+      <div class="tip-card reveal" data-num="05">
+        <div class="tip-emoji">🎓</div>
+        <h3>Educação midiática contínua</h3>
+        <p>A tecnologia de deepfake melhora todo mês. Mantenha-se atualizado seguindo organizações como MIT Media Lab, First Draft e Witness.org.</p>
+      </div>
+      <div class="tip-card reveal" data-num="06">
+        <div class="tip-emoji">🛡️</div>
+        <h3>Privacidade nas redes sociais</h3>
+        <p>Restrinja quem pode ver suas fotos e vídeos. Imagens suas em excesso nas redes facilitam a criação de deepfakes da sua própria face.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== FERRAMENTAS =================== -->
+<section id="ferramentas">
+  <div class="tools-inner">
+    <div class="header-row reveal">
+      <span class="section-tag">Recursos gratuitos</span>
+      <h2><em>Ferramentas</em> para verificar a realidade</h2>
+      <p class="section-intro">Plataformas confiáveis e gratuitas para checar fatos, detectar deepfakes e proteger sua privacidade.</p>
+    </div>
+
+    <div class="tools-grid">
+      <div class="tool-card reveal">
+        <div class="tool-header">
+          <div class="tool-logo">🔍</div>
+          <div>
+            <div class="tool-name">Agência Lupa</div>
+            <span class="tool-tag tag-free">Gratuito</span>
+          </div>
+        </div>
+        <div class="tool-desc">Primeira agência de fact-checking do Brasil. Verifica notícias, declarações de políticos e conteúdos virais com transparência metodológica.</div>
+        <a href="https://lupa.uol.com.br" target="_blank" class="tool-link">Visitar agência</a>
+      </div>
+      <div class="tool-card reveal">
+        <div class="tool-header">
+          <div class="tool-logo">✅</div>
+          <div>
+            <div class="tool-name">Aos Fatos</div>
+            <span class="tool-tag tag-free">Gratuito</span>
+          </div>
+        </div>
+        <div class="tool-desc">Fact-checking independente brasileiro com extensão para Chrome que alerta sobre desinformação em tempo real enquanto você navega.</div>
+        <a href="https://www.aosfatos.org" target="_blank" class="tool-link">Acessar plataforma</a>
+      </div>
+      <div class="tool-card reveal">
+        <div class="tool-header">
+          <div class="tool-logo">🖼️</div>
+          <div>
+            <div class="tool-name">Google Imagens (Busca Reversa)</div>
+            <span class="tool-tag tag-free">Gratuito</span>
+          </div>
+        </div>
+        <div class="tool-desc">Arraste qualquer imagem suspeita para verificar sua origem real. Essencial para detectar fotos antigas sendo usadas fora de contexto.</div>
+        <a href="https://images.google.com" target="_blank" class="tool-link">Verificar imagem</a>
+      </div>
+      <div class="tool-card reveal">
+        <div class="tool-header">
+          <div class="tool-logo">🧪</div>
+          <div>
+            <div class="tool-name">Deepware Scanner</div>
+            <span class="tool-tag tag-free">Gratuito</span>
+          </div>
+        </div>
+        <div class="tool-desc">Ferramenta online que analisa vídeos em busca de manipulações por IA. Ideal para verificar vídeos suspeitos antes de compartilhar.</div>
+        <a href="https://scanner.deepware.ai" target="_blank" class="tool-link">Analisar vídeo</a>
+      </div>
+      <div class="tool-card reveal">
+        <div class="tool-header">
+          <div class="tool-logo">📚</div>
+          <div>
+            <div class="tool-name">Comprova</div>
+            <span class="tool-tag tag-edu">Educacional</span>
+          </div>
+        </div>
+        <div class="tool-desc">Projeto colaborativo de 40 veículos de mídia brasileiros que verificam conteúdos enganosos em períodos eleitorais e além.</div>
+        <a href="https://projetocomprova.com.br" target="_blank" class="tool-link">Acessar projeto</a>
+      </div>
+      <div class="tool-card reveal">
+        <div class="tool-header">
+          <div class="tool-logo">🔒</div>
+          <div>
+            <div class="tool-name">Have I Been Pwned</div>
+            <span class="tool-tag tag-free">Gratuito</span>
+          </div>
+        </div>
+        <div class="tool-desc">Verifique se seu e-mail ou senha já foram expostos em algum vazamento de dados. Fundamental para proteger suas contas online.</div>
+        <a href="https://haveibeenpwned.com" target="_blank" class="tool-link">Verificar e-mail</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== FOOTER =================== -->
+<footer>
+  <div class="footer-logo">Cidadania<span>Digital</span> & IA</div>
+  <div class="footer-tag">#cidadaniadigital2026</div>
+  <p>Tema: Deepfakes e Desinformação na Sociedade · Educação Digital e IA</p>
+  <p style="margin-top:.5rem">Projeto educacional desenvolvido com HTML5, CSS3 e JavaScript puro.</p>
+</footer>
+
+<!-- =================== SCRIPTS =================== -->
+<script>
+  /* ---------- NAV HAMBURGER ---------- */
+  const hamburger = document.getElementById('hamburger');
+  const navLinks  = document.getElementById('navLinks');
+  hamburger.addEventListener('click', () => navLinks.classList.toggle('open'));
+  navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => navLinks.classList.remove('open')));
+
+  /* ---------- SCROLL REVEAL ---------- */
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+  }, { threshold: .12 });
+  reveals.forEach(r => observer.observe(r));
+
+  /* ---------- COUNTER ANIMATION ---------- */
+  function animateCounters() {
+    document.querySelectorAll('[data-count]').forEach(el => {
+      const target = +el.dataset.count;
+      let current = 0;
+      const step = target / 60;
+      const timer = setInterval(() => {
+        current = Math.min(current + step, target);
+        el.textContent = Math.round(current) + (target >= 100 ? '%' : '%');
+        if (current >= target) clearInterval(timer);
+      }, 20);
+    });
+  }
+  const heroObserver = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting) { animateCounters(); heroObserver.disconnect(); }
+  }, { threshold: .5 });
+  heroObserver.observe(document.getElementById('hero'));
+
+  /* ---------- DETECTOR SIMULATOR ---------- */
+  let selectedIsReal = false;
+  function selectFace(el, isReal) {
+    document.querySelectorAll('.face-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedIsReal = isReal;
+    // reset
+    document.getElementById('labelReal').style.opacity = 0;
+    document.getElementById('labelFake').style.opacity = 0;
+    document.getElementById('detectorScore').style.opacity = 0;
+    document.getElementById('detectorHint').textContent = 'Clique em Analisar para iniciar';
+    document.getElementById('detectorResult').style.display = 'none';
+    document.getElementById('analyzeBtn').textContent = 'Analisar Mídia';
+    clearCanvas();
+  }
+
+  function clearCanvas() {
+    const canvas = document.getElementById('scanCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#0a1520';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    drawGrid(ctx, canvas.width, canvas.height);
+  }
+
+  function drawGrid(ctx, w, h) {
+    ctx.strokeStyle = 'rgba(0,229,255,0.06)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < w; x += 20) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+    for (let y = 0; y < h; y += 20) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+  }
+
+  clearCanvas();
+
+  function runAnalysis() {
+    const btn = document.getElementById('analyzeBtn');
+    btn.textContent = 'Analisando...';
+    btn.disabled = true;
+
+    document.getElementById('labelReal').style.opacity = 0;
+    document.getElementById('labelFake').style.opacity = 0;
+    document.getElementById('detectorScore').style.opacity = 0;
+    document.getElementById('detectorResult').style.display = 'none';
+    document.getElementById('detectorHint').textContent = 'Processando camadas neurais...';
+
+    const canvas = document.getElementById('scanCanvas');
+    const ctx = canvas.getContext('2d');
+    let frame = 0;
+
+    const anim = setInterval(() => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#0a1520'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      drawGrid(ctx, canvas.width, canvas.height);
+
+      // scanning line
+      const scanY = (frame * 3) % canvas.height;
+      const grad = ctx.createLinearGradient(0, scanY - 20, 0, scanY + 20);
+      grad.addColorStop(0, 'transparent');
+      grad.addColorStop(.5, 'rgba(0,229,255,.5)');
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad; ctx.fillRect(0, scanY - 20, canvas.width, 40);
+
+      // random anomaly dots
+      if (!selectedIsReal && Math.random() > .7) {
+        for (let i = 0; i < 4; i++) {
+          ctx.fillStyle = 'rgba(255,59,78,' + (.4 + Math.random() * .5) + ')';
+          ctx.beginPath();
+          ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, 2 + Math.random() * 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      frame++;
+      if (frame > 80) {
+        clearInterval(anim);
+        showResult();
+      }
+    }, 16);
+  }
+
+  function showResult() {
+    const confidence = selectedIsReal ? (82 + Math.floor(Math.random() * 15)) : (88 + Math.floor(Math.random() * 11));
+    const labelReal = document.getElementById('labelReal');
+    const labelFake = document.getElementById('labelFake');
+    const score = document.getElementById('detectorScore');
+    const hint = document.getElementById('detectorHint');
+    const result = document.getElementById('detectorResult');
+    const btn = document.getElementById('analyzeBtn');
+
+    score.textContent = confidence + '%';
+    score.style.opacity = 1;
+    score.style.color = selectedIsReal ? 'var(--green)' : 'var(--red)';
+
+    if (selectedIsReal) {
+      labelReal.style.opacity = 1;
+      hint.textContent = 'Nenhuma anomalia detectada';
+      result.innerHTML = '<strong style="color:var(--green)">✓ Conteúdo autêntico.</strong> Metadados consistentes, sem artefatos de manipulação neural detectados. Iluminação e sombras coerentes com o ambiente declarado.';
+    } else {
+      labelFake.style.opacity = 1;
+      hint.textContent = 'Anomalias detectadas nas bordas faciais';
+      result.innerHTML = '<strong style="color:var(--red)">⚠ Possível deepfake.</strong> Artefatos detectados: bordas faciais inconsistentes, padrão de piscadas abaixo do normal (4x/min vs. 15-20x/min humano), e compressão diferencial na região dos olhos.';
+    }
+
+    result.style.display = 'block';
+    btn.textContent = 'Analisar novamente';
+    btn.disabled = false;
+  }
+
+  /* ---------- QUIZ ---------- */
+  const questions = [
+    {
+      q: "Você recebe um vídeo no WhatsApp de um político fazendo uma declaração polêmica. Qual é a primeira atitude correta?",
+      opts: ["Compartilhar imediatamente para alertar os amigos", "Verificar a fonte original e buscar confirmação em veículos confiáveis", "Acreditar se vier de um contato de confiança", "Deletar o vídeo sem ver"],
+      correct: 1,
+      feedback: "✓ Correto! Antes de compartilhar qualquer conteúdo, especialmente vídeos políticos, é essencial verificar a fonte original. Use o Google para buscar se o evento foi coberto por veículos jornalísticos confiáveis.",
+      wrongFeedback: "✗ Incorreto. A atitude correta é sempre verificar a fonte antes de compartilhar. Mesmo vídeos vindos de pessoas de confiança podem ser deepfakes que elas mesmas receberam sem saber."
+    },
+    {
+      q: "Quais características de um rosto em vídeo podem indicar um deepfake?",
+      opts: ["Cabelos coloridos e maquiagem exagerada", "Piscadas irregulares, bordas do cabelo borradas e iluminação inconsistente", "Falar muito rápido ou muito devagar", "Usar óculos ou chapéu"],
+      correct: 1,
+      feedback: "✓ Correto! Deepfakes frequentemente apresentam piscadas fora do ritmo natural, bordas do rosto e cabelo com artefatos digitais, e iluminação do rosto inconsistente com o ambiente ao redor.",
+      wrongFeedback: "✗ Incorreto. Os sinais técnicos de deepfake incluem piscadas irregulares (menos de 5x por minuto vs. 15-20 normal), bordas borradas no cabelo/orelhas, e inconsistência na iluminação facial."
+    },
+    {
+      q: "O que é uma 'GAN' no contexto de deepfakes?",
+      opts: ["Um aplicativo de edição de vídeo profissional", "Um tipo de câmera de alta resolução", "Rede Generativa Adversarial — dois sistemas de IA que competem para criar e detectar falsificações", "Um protocolo de segurança da internet"],
+      correct: 2,
+      feedback: "✓ Correto! GANs (Generative Adversarial Networks) são a tecnologia central dos deepfakes. Uma rede 'geradora' cria imagens falsas, enquanto uma rede 'discriminadora' tenta detectar a falsificação. O processo se repete até produzir resultados hiper-realistas.",
+      wrongFeedback: "✗ Incorreto. GANs (Redes Generativas Adversariais) consistem em duas IAs que competem: uma gera conteúdo falso e a outra tenta detectar. Essa competição é o que torna os deepfakes tão convincentes."
+    },
+    {
+      q: "Uma foto 'chocante' viral mostra um evento que não aparece em nenhum veículo de notícias conhecido. O mais provável é:",
+      opts: ["O evento é tão recente que a imprensa ainda não cobriu", "A imagem foi gerada por IA ou retirada de contexto", "É uma conspiração da mídia para esconder a verdade", "O evento aconteceu em local muito remoto"],
+      correct: 1,
+      feedback: "✓ Correto! Se um evento importante não aparece em nenhum veículo confiável, a probabilidade de ser desinformação é alta. Sempre faça busca reversa da imagem e pesquise em múltiplas fontes jornalísticas.",
+      wrongFeedback: "✗ Incorreto. A ausência de cobertura por veículos confiáveis é um sinal importante. Use a busca reversa de imagem do Google para verificar a origem real da foto."
+    },
+    {
+      q: "Qual dessas práticas NÃO protege sua identidade contra uso indevido de IA?",
+      opts: ["Restringir quem pode ver suas fotos nas redes sociais", "Usar o mesmo e-mail e senha em todos os sites para não esquecer", "Ativar autenticação em dois fatores (2FA)", "Usar um gerenciador de senhas"],
+      correct: 1,
+      feedback: "✓ Correto! Reutilizar senhas é perigoso: se um site vazar, todas as suas contas ficam expostas. Use senhas únicas e um gerenciador como Bitwarden (gratuito) para manter tudo seguro.",
+      wrongFeedback: "✗ Incorreto. Usar a mesma senha em todos os sites é uma prática altamente arriscada. Um único vazamento compromete todas as contas. Use senhas únicas e um gerenciador de senhas."
+    }
+  ];
+
+  let currentQ = 0, score = 0, answered = false;
+
+  function loadQuestion() {
+    const q = questions[currentQ];
+    document.getElementById('quizCounter').textContent = `Pergunta ${currentQ + 1} de ${questions.length}`;
+    document.getElementById('quizFill').style.width = ((currentQ / questions.length) * 100) + '%';
+    document.getElementById('quizQuestion').textContent = q.q;
+    document.getElementById('quizFeedback').style.display = 'none';
+    document.getElementById('quizNext').style.display = 'none';
+    answered = false;
+
+    const opts = document.getElementById('quizOptions');
+    opts.innerHTML = '';
+    q.opts.forEach((opt, i) => {
+      const div = document.createElement('div');
+      div.className = 'quiz-option';
+      div.innerHTML = `<div class="option-letter">${String.fromCharCode(65 + i)}</div>${opt}`;
+      div.addEventListener('click', () => selectAnswer(i));
+      opts.appendChild(div);
+    });
+  }
+
+  function selectAnswer(idx) {
+    if (answered) return;
+    answered = true;
+    const q = questions[currentQ];
+    const opts = document.querySelectorAll('.quiz-option');
+    opts.forEach(o => o.classList.add('disabled'));
+    opts[idx].classList.add(idx === q.correct ? 'correct' : 'wrong');
+    if (idx !== q.correct) opts[q.correct].classList.add('correct');
+
+    const fb = document.getElementById('quizFeedback');
+    const isCorrect = idx === q.correct;
+    if (isCorrect) score++;
+    fb.className = 'quiz-feedback ' + (isCorrect ? 'feedback-correct' : 'feedback-wrong');
+    fb.textContent = isCorrect ? q.feedback : q.wrongFeedback;
+    fb.style.display = 'block';
+    document.getElementById('quizNext').style.display = 'block';
+    document.getElementById('quizNext').textContent = currentQ < questions.length - 1 ? 'Próxima pergunta →' : 'Ver resultado →';
+  }
+
+  function nextQuestion() {
+    currentQ++;
+    if (currentQ < questions.length) { loadQuestion(); return; }
+    showQuizResult();
+  }
+
+  function showQuizResult() {
+    document.getElementById('quizContent').style.display = 'none';
+    document.getElementById('quizFill').style.width = '100%';
+    const result = document.getElementById('quizResult');
+    result.style.display = 'block';
+    document.getElementById('resultScore').textContent = score + '/5';
+    const labels = ['Continue estudando!', 'Bom começo!', 'Está evoluindo!', 'Muito bem!', 'Excelente!', 'Cidadão Digital Pleno! 🏆'];
+    const msgs = [
+      'Ainda há muito para aprender. Leia o conteúdo desta página com atenção e tente novamente.',
+      'Você pegou algumas, mas é importante aprofundar o conhecimento sobre deepfakes e desinformação.',
+      'Você está no caminho certo! Revise as questões erradas e pratique mais.',
+      'Ótimo desempenho! Você já tem boa percepção sobre desinformação digital.',
+      'Quase perfeito! Você está bem preparado para identificar conteúdo manipulado.',
+      'Parabéns! Você domina o assunto e está preparado para ajudar a combater a desinformação!'
+    ];
+    document.getElementById('resultLabel').textContent = labels[score];
+    document.getElementById('resultMsg').textContent = msgs[score];
+  }
+
+  function restartQuiz() {
+    currentQ = 0; score = 0;
+    document.getElementById('quizContent').style.display = 'block';
+    document.getElementById('quizResult').style.display = 'none';
+    document.getElementById('quizFill').style.width = '0%';
+    loadQuestion();
+  }
+
+  loadQuestion();
+</script>
+</body>
+</html>
