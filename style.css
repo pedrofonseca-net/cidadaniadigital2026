@@ -317,13 +317,11 @@ h2 em { font-style: normal; color: var(--cyan); }
 }
 .detector-panel p { color: var(--muted); font-size: .9rem; margin-bottom: 1.5rem; }
 .detector-img-wrap {
-  
-  
-  /* Garante que o conteúdo interno fique centralizado */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+      position: relative; border-radius: var(--radius);
+      overflow: hidden; cursor: pointer;
+      background: #0a1520;
+      height: 240px; display: flex; align-items: center; justify-content: center;
+    }
 .detector-canvas { width: 100%; height: 100%; position: relative; }
 .detector-overlay {
   position: absolute; inset: 0;
