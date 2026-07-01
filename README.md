@@ -123,4 +123,13 @@ Regras Técnicas Obrigatórias:
 
 ---
 
+## 🖼 Prompts de Imagens
+
+- Imagem falsa 1: Gere imagem de um candidato político fazendo um discurso
+- Imagem falsa 2: gere uma imagem como se alguem tivesse capturado secretamente (de forma escondida) uma foto de um CEO gravando um áudio confidencial. deixe a foto com mais detalhes como se fosse tirada atrás de uma parede, duto ou móvel
+
+- Ambas imagens geradas com Gemini AI
+
+---
+
 *Projeto educacional desenvolvido para o componente Educação Digital e IA — 2026*
