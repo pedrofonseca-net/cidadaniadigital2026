@@ -328,9 +328,14 @@
     }
     .detector-panel p { color: var(--muted); font-size: .9rem; margin-bottom: 1.5rem; }
     .detector-img-wrap {
-      position: relative; border-radius: var(--radius);
+      position: relative;
+      width: 100%;
+      max-width: 400px
       overflow: hidden; cursor: pointer;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
       background: #0a1520;
+      margin: 0 auto 1.5rem auto;
       height: 240px; display: flex; align-items: center; justify-content: center;
     }
     .detector-canvas { width: 100%; height: 100%; position: relative; }
