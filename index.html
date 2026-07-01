@@ -333,13 +333,35 @@
       background: #0a1520;
       height: 240px; display: flex; align-items: center; justify-content: center;
     }
-    .detector-canvas { width: 100%; height: 100%; position: relative; }
-    .detector-overlay {
-      position: absolute; inset: 0;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: .5rem;
+    .detector-foto {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover; /* Faz a foto cobrir o fundo perfeitamente sem distorcer */
+      object-position: center; /* Garante que o foco da foto seja o meio dela */
+      opacity: 0.5; /* Mantém um tom mais escuro para o laser aparecer */
+      z-index: 0; /* Fica no fundo de tudo */
     }
+    .detector-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1; /* Fica por cima da foto */
+      pointer-events: none; /* Evita que o canvas atrapalhe cliques se necessário */
+    }
+
+    .detector-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      z-index: 2; /* Fica por cima de tudo (foto e laser) */
+    }   
     .detector-label {
       font-family: var(--font-d); font-size: .75rem; font-weight: 700;
       text-transform: uppercase; letter-spacing: .1em;
