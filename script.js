@@ -31,11 +31,19 @@ heroObserver.observe(document.getElementById('hero'));
 
 /* ---------- DETECTOR SIMULATOR ---------- */
 let selectedIsReal = false;
-function selectFace(el, isReal) {
+// Adicionamos a palavra 'nomeDaFoto' aqui dentro dos parênteses
+function selectFace(el, isReal, nomeDaFoto) {
   document.querySelectorAll('.face-option').forEach(o => o.classList.remove('selected'));
   el.classList.add('selected');
   selectedIsReal = isReal;
-  // reset
+  
+  // Aqui nós pegamos a tag <img> e mudamos o src juntando 'img/' com o nome da foto
+  const foto = document.getElementById('detectorFoto');
+  if (nomeDaFoto) {
+    foto.src = 'img/' + nomeDaFoto;
+  }
+
+  // O resto continua igual (reseta os textos e o canvas)
   document.getElementById('labelReal').style.opacity = 0;
   document.getElementById('labelFake').style.opacity = 0;
   document.getElementById('detectorScore').style.opacity = 0;
